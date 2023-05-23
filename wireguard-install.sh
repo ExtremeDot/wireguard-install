@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.93
+EDVERSION=1.94
 INSTART=0
 
 clear
@@ -679,11 +679,13 @@ function revokeClient() {
 		echo "You have no existing clients!"
 		back2Menu
 	fi
+
 	CLIENT_NUMBER=""
 
 	echo ""
 	echo "Select the existing client you want to revoke"
 	echo "Enter 0 to back to Main Menu"
+	
 	grep -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf" | cut -d ' ' -f 3 | nl -s ') '
 	
 	until [[ ${CLIENT_NUMBER} -ge 0 && ${CLIENT_NUMBER} -le ${NUMBER_OF_CLIENTS} ]]; do
@@ -698,7 +700,7 @@ function revokeClient() {
 		back2Menu
 	fi
 	
-
+	back2Menu
 	# match the selected number to a client name
 	CLIENT_NAME=$(grep -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf" | cut -d ' ' -f 3 | sed -n "${CLIENT_NUMBER}"p)
 
@@ -716,7 +718,6 @@ function revokeClient() {
 	else
 		echo "The file /usr/local/extDot/userInfo.conf does not exist."
 	fi
-
 
 	# restart wireguard to apply changes
 	wg syncconf "${SERVER_WG_NIC}" <(wg-quick strip "${SERVER_WG_NIC}")
