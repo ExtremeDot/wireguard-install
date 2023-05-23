@@ -693,7 +693,7 @@ function revokeClient() {
 		if [[ ${CLIENT_NUMBER} == '1' ]]; then
 			read -rp "Select one client [1]: " CLIENT_NUMBER
 		else
-			read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
+			read -rp "Select one client [0-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
 		fi
 	done
 	
