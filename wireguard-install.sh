@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.95
+EDVERSION=1.96
 INSTART=0
 
 clear
@@ -698,6 +698,10 @@ function revokeClient() {
 	done
 	
 	if [[ -n $CLIENT_NUMBER && $CLIENT_NUMBER -eq 0 ]]; then
+		back2Menu
+	fi
+	
+	if [[ $CLIENT_NUMBER -eq -100 ]]; then
 		back2Menu
 	fi
 	
