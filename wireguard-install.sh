@@ -811,9 +811,9 @@ function manageMenu() {
 	echo "https://github.com/ExtremeDot/wireguard-install"
 	echo " ------------------------------------------------------------------------------------"
 	echo
-	echo "   1) Add a new user                                    6) Edit UserInfo"
-	echo "   2) Show all users information                        7) Permission Fix for Script"
-	echo "   3) Generate QR for Clients"
+	echo "   1) Add a new user                               6) Edit UserInfo"
+	echo "   2) Show all users information                   7) Permission Fix for Script"
+	echo "   3) Generate QR for Clients                      8) Syncing Configs to Apply Users"
 	echo "   4) Update the User Expiration Date"
 	echo "   5) Revoke existing user"
 	echo
@@ -848,6 +848,11 @@ function manageMenu() {
 		;;
 	7)
 		sudo chmod +x /usr/local/extDot/wgExpCtrl.sh
+		back2Menu
+		;;
+		
+	8)
+		sudo bash /usr/local/extDot/wgExpCtrl.sh
 		back2Menu
 		;;
 
