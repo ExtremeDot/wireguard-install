@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.79
+EDVERSION=1.80
 INSTART=0
 
 clear
@@ -615,7 +615,7 @@ function revokeClient() {
 	if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
 		echo ""
 		echo "You have no existing clients!"
-		exit 1
+		back2Menu
 	fi
 
 	echo ""
