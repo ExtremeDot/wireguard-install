@@ -546,7 +546,7 @@ function manageMenu() {
 	echo "====================================================================================="
 	echo
 	until [[ ${MENU_OPTION} =~ ^[1-5]$ ]]; do
-		read -rp "Select an option [1-5]: " MENU_OPTION
+		read -rp "Select an option : " MENU_OPTION
 	done
 	case "${MENU_OPTION}" in
 	1)
