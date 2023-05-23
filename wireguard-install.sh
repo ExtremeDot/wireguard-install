@@ -497,6 +497,7 @@ function newClient() {
 	CLIENT_PRE_SHARED_KEY=$(wg genpsk)
 
 	HOME_DIR=$(getHomeDirForClient "${CLIENT_NAME}")
+	mkdir -p $HOME_DIR
 
 	# Create client file and add the server as a peer
 	echo "[Interface]
