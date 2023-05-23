@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.72
+EDVERSION=1.73
 
 clear
 
@@ -341,6 +341,7 @@ PostUp = iptables -I FORWARD -i ${SERVER_WG_NIC} -j ACCEPT
 PostUp = iptables -t nat -A POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE
 PostUp = ip6tables -I FORWARD -i ${SERVER_WG_NIC} -j ACCEPT
 PostUp = ip6tables -t nat -A POSTROUTING -o ${SERVER_PUB_NIC} -j MASQUERADE
+PostUp = /usr/local/extDot/wgExpCtrl.sh
 PostDown = iptables -D INPUT -p udp --dport ${SERVER_PORT} -j ACCEPT
 PostDown = iptables -D FORWARD -i ${SERVER_PUB_NIC} -o ${SERVER_WG_NIC} -j ACCEPT
 PostDown = iptables -D FORWARD -i ${SERVER_WG_NIC} -j ACCEPT
@@ -387,6 +388,18 @@ net.ipv6.conf.all.forwarding = 1" >/etc/sysctl.d/wg.conf
 		echo -e "${GREEN}You can check the status of WireGuard with: systemctl status wg-quick@${SERVER_WG_NIC}\n\n${NC}"
 		echo -e "${ORANGE}If you don't have internet connectivity from your client, try to reboot the server.${NC}"
 	fi
+	
+	
+	# add a cronjob to refresh every 1 hour user expiration
+	CRTLINE="/usr/local/extDot/wgExpCtrl.sh"
+	CRONTAB=$(crontab -l)
+	if [[ $CRONTAB == *"$CRTLINE"* ]]; then
+	echo "Crontab has Updated Before."
+	else
+	echo "The specified line does not exist in the crontab."
+	crontab -l | { cat; echo "45 * * * * /usr/local/extDot/wgExpCtrl.sh" ; } | crontab -
+	fi
+
 }
 
 function updateSC() {
@@ -516,8 +529,7 @@ AllowedIPs = ${ALLOWED_IPS}" >"${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME
 [Peer]
 PublicKey = ${CLIENT_PUB_KEY}
 PresharedKey = ${CLIENT_PRE_SHARED_KEY}
-AllowedIPs = ${CLIENT_WG_IPV4}/32,${CLIENT_WG_IPV6}/128
-PostUp = /usr/local/extDot/wgExpCtrl.sh" >>"/etc/wireguard/${SERVER_WG_NIC}.conf"
+AllowedIPs = ${CLIENT_WG_IPV4}/32,${CLIENT_WG_IPV6}/128" >>"/etc/wireguard/${SERVER_WG_NIC}.conf"
 
 	wg syncconf "${SERVER_WG_NIC}" <(wg-quick strip "${SERVER_WG_NIC}")
 
@@ -669,6 +681,16 @@ function uninstallWg() {
 		else
 			echo "WireGuard uninstalled successfully."
 			exit 0
+		fi
+		
+		CRTLINE="/usr/local/extDot/wgExpCtrl.sh"
+		CRONTAB=$(crontab -l)
+		if [[ $CRONTAB == *"$CRTLINE"* ]]; then
+		NEW_CRONTAB=$(echo "$CRONTAB" | grep -v "$CRTLINE")
+		echo "$NEW_CRONTAB" | crontab -
+		echo "Line removed successfully."
+		else
+		echo "The specified line does not exist in the crontab."
 		fi
 	else
 		echo ""
