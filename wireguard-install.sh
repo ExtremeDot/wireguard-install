@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.4
+EDVERSION=1.6
 
 clear
 
@@ -266,6 +266,18 @@ net.ipv6.conf.all.forwarding = 1" >/etc/sysctl.d/wg.conf
 
 	systemctl start "wg-quick@${SERVER_WG_NIC}"
 	systemctl enable "wg-quick@${SERVER_WG_NIC}"
+	
+	if [ ! -f /usr/local/extDot/userInfo.conf ]; then
+	echo "No userInfo file , creating ..."
+	else
+	echo "Old userInfo file has found, cleaning data on it ..."
+	rm /usr/local/extDot/userInfo.conf
+	sleep 1
+	fi
+	
+	touch /usr/local/extDot/userInfo.conf
+	
+	chmod u+rw /usr/local/extDot/userInfo.conf
 
 	newClient
 	echo -e "${GREEN}If you want to add more clients, you simply need to run this script another time!${NC}"
@@ -353,7 +365,7 @@ function newClient() {
 			read -rp "Expiration date: " -e -i "$current_date" expiration_date
 		done
 		
-	# add to data base
+	# add to database
 	# Check if file exists, create it if it doesn't
 	if [ ! -f /usr/local/extDot/userInfo.conf ]; then
 	touch /usr/local/extDot/userInfo.conf
@@ -472,21 +484,31 @@ function revokeClient() {
 	wg syncconf "${SERVER_WG_NIC}" <(wg-quick strip "${SERVER_WG_NIC}")
 }
 
+function oldDataBackup() {
+	current_datetime=$(date +'%Y-%m-%d_%H-%M-%S')
+	backup_folder="/usr/local/extDot/backup/$current_datetime"
+	mkdir -p "$backup_folder"
+	cp -r /etc/wireguard/* "$backup_folder"
+	mv /usr/local/extDot/userInfo.conf "$backup_folder/userInfo.conf"
+}
+
 function uninstallWg() {
 	echo ""
 	echo -e "\n${RED}WARNING: This will uninstall WireGuard and remove all the configuration files!${NC}"
-	echo -e "${ORANGE}Please backup the /etc/wireguard directory if you want to keep your configuration files.\n${NC}"
+	echo -e "${ORANGE}for Debian and Ubuntu ,Current configs will backed up into [/usr/local/exdotwg/backup] folder.\n${NC}"
 	read -rp "Do you really want to remove WireGuard? [y/n]: " -e REMOVE
 	REMOVE=${REMOVE:-n}
 	if [[ $REMOVE == 'y' ]]; then
+		
 		checkOS
-
 		systemctl stop "wg-quick@${SERVER_WG_NIC}"
 		systemctl disable "wg-quick@${SERVER_WG_NIC}"
 
 		if [[ ${OS} == 'ubuntu' ]]; then
+			oldDataBackup		
 			apt-get remove -y wireguard wireguard-tools qrencode
 		elif [[ ${OS} == 'debian' ]]; then
+			oldDataBackup
 			apt-get remove -y wireguard wireguard-tools qrencode
 		elif [[ ${OS} == 'fedora' ]]; then
 			dnf remove -y --noautoremove wireguard-tools qrencode
@@ -504,7 +526,7 @@ function uninstallWg() {
 		elif [[ ${OS} == 'arch' ]]; then
 			pacman -Rs --noconfirm wireguard-tools qrencode
 		fi
-
+		
 		rm -rf /etc/wireguard
 		rm -f /etc/sysctl.d/wg.conf
 
@@ -530,10 +552,10 @@ function uninstallWg() {
 
 function manageMenu() {
 	echo "====================================================================================="
-	echo "Welcome to WireGuard-installation Menu by ExtremeDOT - Version $EDVERSION ."
+	echo "Welcome to WireGuard-installation Menu by ExtremeDOT                     Version $EDVERSION"
+	echo "This script is forked from Angristan Script"						   
 	echo
-	echo "The git repository is available at: https://github.com/ExtremeDot/wireguard-install"
-	echo "This script is forked from Angristan Script"
+	echo "https://github.com/ExtremeDot/wireguard-install"
 	echo " ------------------------------------------------------------------------------------"
 	echo
 	echo "   1) Add a new user"
