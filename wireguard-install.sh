@@ -291,7 +291,7 @@ mkdir -p /tmp/extdotwg
 cd /tmp/extdotwg
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-curl -O https://raw.githubusercontent.com/ExtremeDot/wireguard-install/extreme/wireguard-install.sh
+wget https://raw.githubusercontent.com/ExtremeDot/wireguard-install/extreme/wireguard-install.sh
 chmod +x wireguard-install.sh
 mv /tmp/extdotwg/wireguard-install.sh /usr/local/bin/eXdot-WG
 chmod +x /usr/local/bin/eXdot-WG
