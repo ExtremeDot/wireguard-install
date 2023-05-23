@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.77
+EDVERSION=1.78
 INSTART=0
 
 clear
@@ -556,12 +556,12 @@ AllowedIPs = ${CLIENT_WG_IPV4}/32,${CLIENT_WG_IPV6}/128" >>"/etc/wireguard/${SER
 	fi
 
 	echo -e "${GREEN}Your client config file is in ${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.conf${NC}"
-	
 	back2Menu
 }
 
 function listClients() {
 	NUMBER_OF_CLIENTS=$(grep -c -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf")
+	
 	if [[ ${NUMBER_OF_CLIENTS} -eq 0 ]]; then
 		echo
 		echo "You have no existing clients!"
@@ -570,9 +570,6 @@ function listClients() {
 	grep -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf" | cut -d ' ' -f 3 | nl -s ') '
 	
 	back2Menu
-}
-	
-	
 }
 
 
@@ -606,6 +603,7 @@ function genQRClients() {
 	fi
 
 	echo -e "${GREEN}Your client config file is in ${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.conf${NC}"
+	
 	back2Menu
 	
 	}
