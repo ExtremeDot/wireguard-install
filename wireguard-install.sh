@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.97
+EDVERSION=1.971
 INSTART=0
 
 clear
@@ -694,16 +694,15 @@ function revokeClient() {
 		fi
 	done
 	
-	if [[ -n $CLIENT_NUMBER ]] then
+	if [[ -n $CLIENT_NUMBER ]]; then
 		if [[ $CLIENT_NUMBER -eq 0 ]]; then
-		back2Menu
+			back2Menu
 		elif [[ $CLIENT_NUMBER -eq -100 ]]; then
-		back2Menu
+			back2Menu
 		fi
 	else
-	back2Menu
-	fi
-	
+		back2Menu
+	fi	
 		
 	# match the selected number to a client name
 	CLIENT_NAME=$(grep -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf" | cut -d ' ' -f 3 | sed -n "${CLIENT_NUMBER}"p)
