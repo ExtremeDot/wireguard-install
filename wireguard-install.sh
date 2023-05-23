@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.94
+EDVERSION=1.95
 INSTART=0
 
 clear
@@ -684,7 +684,8 @@ function revokeClient() {
 
 	echo ""
 	echo "Select the existing client you want to revoke"
-	echo "Enter 0 to back to Main Menu"
+	echo "     0) Back to Main Menu"
+
 	
 	grep -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf" | cut -d ' ' -f 3 | nl -s ') '
 	
