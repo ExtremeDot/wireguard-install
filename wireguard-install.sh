@@ -24,6 +24,7 @@ function back2Menu() {
 echo 
 if [ "$INSTART" -eq 0 ]; then
 read -n 1 -s -r -p "Press any key to continue..."
+clear
 manageMenu
 fi
 
