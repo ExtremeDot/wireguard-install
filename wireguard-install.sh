@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.2
+EDVERSION=1.3
 
 clear
 
@@ -534,7 +534,6 @@ function manageMenu() {
 	echo
 	echo "The git repository is available at: https://github.com/ExtremeDot/wireguard-install"
 	echo "This script is forked from Angristan Script"
-	echo "It looks like WireGuard is already installed."
 	echo " ------------------------------------------------------------------------------------"
 	echo
 	echo "   1) Add a new user"
