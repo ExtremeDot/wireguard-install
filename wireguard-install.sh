@@ -627,6 +627,44 @@ function genQRClients() {
 	
 	}
 	
+function updateExpClient() {
+# Read clients from userInfo.conf file
+clients_file="/usr/local/extDot/userInfo.conf"
+clients=($(grep -oP '^[^=]+' "$clients_file"))
+
+# Display menu of existing clients
+echo "Existing clients:"
+for i in "${!clients[@]}"; do
+  echo "$((i+1)). ${clients[i]}"
+done
+
+# Prompt for client selection
+read -p "Select a client number: " client_number
+
+# Validate client selection
+if [[ ! "$client_number" =~ ^[0-9]+$ ]] || [[ "$client_number" -lt 1 ]] || [[ "$client_number" -gt "${#clients[@]}" ]]; then
+  echo "Invalid client number."
+  exit 1
+fi
+
+# Get selected client name
+selected_client="${clients[client_number-1]}"
+
+current_date=$(date +'%Y-%m-%d')
+echo "Enter expiration date in (YYYY-MM-DD) format: "
+read -rp "Expiration date: " -e -i "$current_date" new_expiration_date
+new_expiration_date=${new_expiration_date:-$current_date}
+
+until date -d "$new_expiration_date" >/dev/null 2>&1; do
+	echo -e "${RED} Error: Invalid date format. Please use the format YYYY-MM-DD ${NC}"
+	read -rp "Expiration date: " -e -i "$current_date" new_expiration_date
+done
+
+# Update expiration date in the userInfo.conf file
+sed -i "s/^$selected_client=.*/$selected_client=$new_expiration_date/" "$clients_file"
+echo "Expiration date updated for $selected_client."
+
+}
 
 function revokeClient() {
 	NUMBER_OF_CLIENTS=$(grep -c -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf")
@@ -759,7 +797,8 @@ function manageMenu() {
 	echo "   1) Add a new user"
 	echo "   2) Show all users information"
 	echo "   3) Generate QR for Clients"
-	echo "   4) Revoke existing user"
+	echo "   4) Update the User Expiration Date"
+	echo "   5) Revoke existing user"
 	echo
 	echo " ------------------------------------------------------------------------------------"
 	echo "   98) Uninstall WireGuard       99) Update Script to Latest               0) Exit"
@@ -780,9 +819,11 @@ function manageMenu() {
 	3)
 		genQRClients
 		;;
-		
 	4)
 		revokeClient
+		;;		
+	5)
+		updateExpClient
 		;;
 	98)
 		uninstallWg
