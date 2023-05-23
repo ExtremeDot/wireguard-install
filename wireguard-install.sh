@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.82
+EDVERSION=1.83
 INSTART=0
 
 clear
@@ -168,7 +168,8 @@ done
 
 EOF
 
-    chmod +x /usr/local/extDot/wgExpCtrl.sh
+chmod +x /usr/local/extDot/wgExpCtrl.sh
+
 }
 
 function getHomeDirForClient() {
@@ -409,11 +410,13 @@ net.ipv6.conf.all.forwarding = 1" >/etc/sysctl.d/wg.conf
 	# add a cronjob to refresh every 1 hour user expiration
 	CRTLINE="/usr/local/extDot/wgExpCtrl.sh"
 	CRONTAB=$(crontab -l)
+	
 	if [[ $CRONTAB == *"$CRTLINE"* ]]; then
-	echo "Crontab has Updated Before."
+		echo "Crontab has Updated Before."
 	else
-	echo "The specified line does not exist in the crontab."
-	crontab -l | { cat; echo "45 * * * * /usr/local/extDot/wgExpCtrl.sh" ; } | crontab -
+		echo "The specified line does not exist in the crontab."
+		chmod +x /usr/local/extDot/wgExpCtrl.sh
+		crontab -l | { cat; echo "45 * * * * /usr/local/extDot/wgExpCtrl.sh" ; } | crontab -
 	fi
 
 }
@@ -444,7 +447,7 @@ function newClient() {
 	echo "Client configuration"
 	echo ""
 	echo "The client name must consist of alphanumeric character(s). It may also include underscores or dashes and can't exceed 15 chars."
-
+	CLIENT_NAME=""
 	until [[ ${CLIENT_NAME} =~ ^[a-zA-Z0-9_-]+$ && ${CLIENT_EXISTS} == '0' && ${#CLIENT_NAME} -lt 16 ]]; do
 		read -rp "Client name: " -e CLIENT_NAME
 		CLIENT_EXISTS=$(grep -c -E "^### Client ${CLIENT_NAME}\$" "/etc/wireguard/${SERVER_WG_NIC}.conf")
@@ -561,21 +564,34 @@ AllowedIPs = ${CLIENT_WG_IPV4}/32,${CLIENT_WG_IPV6}/128" >>"/etc/wireguard/${SER
 }
 
 function listClients() {
-	NUMBER_OF_CLIENTS=$(grep -c -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf")
-	
-	if [[ ${NUMBER_OF_CLIENTS} -eq 0 ]]; then
-		echo
-		echo "You have no existing clients!"
-	fi
-
-	grep -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf" | cut -d ' ' -f 3 | nl -s ') '
-	
+NUMBER_OF_CLIENTS=$(grep -c -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf")
+if [[ ${NUMBER_OF_CLIENTS} -eq 0 ]]; then
+	echo
+	echo "You have no existing clients!"
 	back2Menu
+fi
+
+WG_CONF="/etc/wireguard/${SERVER_WG_NIC}.conf"
+USER_INFO="/usr/local/extDot/userInfo.conf"
+clients=$(grep -E "^### Client" "$WG_CONF" | cut -d ' ' -f 3)
+counter=1
+while read -r client; do
+    expiration_date=$(grep -E "^${client}=" "$USER_INFO" | cut -d '=' -f 2)
+    if [[ "$(date +%Y-%m-%d)" > "$expiration_date" ]]; then
+        echo -e "\e[31m$counter. [ $expiration_date ] - $client\e[0m"
+    else
+        echo "$counter. [ $expiration_date ] - $client"
+    fi
+
+    ((counter++))
+done <<< "$clients"
+back2Menu
+
 }
 
 
 function genQRClients() {
-		NUMBER_OF_CLIENTS=$(grep -c -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf")
+	NUMBER_OF_CLIENTS=$(grep -c -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf")
 	if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
 		echo ""
 		echo "You have no existing clients!"
@@ -739,7 +755,7 @@ function manageMenu() {
 	echo " ------------------------------------------------------------------------------------"
 	echo
 	echo "   1) Add a new user"
-	echo "   2) List all users"
+	echo "   2) Show all users information"
 	echo "   3) Generate QR for Clients"
 	echo "   4) Revoke existing user"
 	echo
