@@ -7,6 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
+EDVERSION=1.0
 
 function isRoot() {
 	if [ "${EUID}" -ne 0 ]; then
@@ -78,18 +79,18 @@ function getHomeDirForClient() {
 	# Home directory of the user, where the client configuration will be written
 	if [ -e "/home/${CLIENT_NAME}" ]; then
 		# if $1 is a user name
-		HOME_DIR="/home/${CLIENT_NAME}"
+		HOME_DIR="/home/wireguard/${CLIENT_NAME}"
 	elif [ "${SUDO_USER}" ]; then
 		# if not, use SUDO_USER
 		if [ "${SUDO_USER}" == "root" ]; then
 			# If running sudo as root
-			HOME_DIR="/root"
+			HOME_DIR="/root/wireguard"
 		else
-			HOME_DIR="/home/${SUDO_USER}"
+			HOME_DIR="/home/wireguard/${SUDO_USER}"
 		fi
 	else
 		# if not SUDO_USER, use /root
-		HOME_DIR="/root"
+		HOME_DIR="/root/wireguard"
 	fi
 
 	echo "$HOME_DIR"
@@ -103,7 +104,7 @@ function initialCheck() {
 
 function installQuestions() {
 	echo "Welcome to the WireGuard installer!"
-	echo "The git repository is available at: https://github.com/angristan/wireguard-install"
+	echo "The git repository is available at: https://github.com/ExtremeDot/wireguard-install"
 	echo ""
 	echo "I need to ask you a few questions before starting the setup."
 	echo "You can keep the default options and just press enter if you are ok with them."
@@ -208,8 +209,10 @@ function installWireGuard() {
 
 	# Make sure the directory exists (this does not seem the be the case on fedora)
 	mkdir /etc/wireguard >/dev/null 2>&1
+	mkdir -p /usr/local/extDot >/dev/null 2>&1
 
 	chmod 600 -R /etc/wireguard/
+	chmod 600 -R /usr/local/extDot
 
 	SERVER_PRIV_KEY=$(wg genkey)
 	SERVER_PUB_KEY=$(echo "${SERVER_PRIV_KEY}" | wg pubkey)
@@ -261,6 +264,9 @@ net.ipv6.conf.all.forwarding = 1" >/etc/sysctl.d/wg.conf
 
 	systemctl start "wg-quick@${SERVER_WG_NIC}"
 	systemctl enable "wg-quick@${SERVER_WG_NIC}"
+	
+	# add expiration date check script
+	echo "
 
 	newClient
 	echo -e "${GREEN}If you want to add more clients, you simply need to run this script another time!${NC}"
@@ -318,6 +324,31 @@ function newClient() {
 		echo "The subnet configured supports only 253 clients."
 		exit 1
 	fi
+	
+	# Get current date
+	current_date=$(date +'%Y-%m-%d')
+	
+	# Prompt user to set expiration date with default value of current date
+	echo "Enter expiration date in (YYYY-MM-DD) format: "
+	
+	# Use default value if user input is empty
+	read -rp "Expiration date: " -e -i "$current_date" expiration_date
+	expiration_date=${expiration_date:-$current_date}
+	
+	# Check that the expiration date is in the correct format
+		until date -d "$expiration_date" >/dev/null 2>&1; do
+			echo -e "${RED} Error: Invalid date format. Please use the format YYYY-MM-DD ${NC}"
+			read -rp "Expiration date: " -e -i "$current_date" expiration_date
+		done
+		
+	# add to data base
+	# Check if file exists, create it if it doesn't
+	if [ ! -f /usr/local/extDot/userInfo.conf ]; then
+	touch /usr/local/extDot/userInfo.conf
+	chmod u+rw /usr/local/extDot/userInfo.conf
+	fi
+	
+	echo "${CLIENT_NAME}=$expiration_date" >> /usr/local/extDot/userInfo.conf
 
 	BASE_IP=$(echo "$SERVER_WG_IPV4" | awk -F '.' '{ print $1"."$2"."$3 }')
 	until [[ ${IPV4_EXISTS} == '0' ]]; do
@@ -369,7 +400,9 @@ AllowedIPs = ${ALLOWED_IPS}" >"${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME
 [Peer]
 PublicKey = ${CLIENT_PUB_KEY}
 PresharedKey = ${CLIENT_PRE_SHARED_KEY}
-AllowedIPs = ${CLIENT_WG_IPV4}/32,${CLIENT_WG_IPV6}/128" >>"/etc/wireguard/${SERVER_WG_NIC}.conf"
+AllowedIPs = ${CLIENT_WG_IPV4}/32,${CLIENT_WG_IPV6}/128" 
+PostUp = /usr/local/bin/check_wireguard_expiration.sh
+>>"/etc/wireguard/${SERVER_WG_NIC}.conf"
 
 	wg syncconf "${SERVER_WG_NIC}" <(wg-quick strip "${SERVER_WG_NIC}")
 
@@ -484,17 +517,19 @@ function uninstallWg() {
 }
 
 function manageMenu() {
-	echo "Welcome to WireGuard-install!"
-	echo "The git repository is available at: https://github.com/angristan/wireguard-install"
-	echo ""
+	echo "Welcome to WireGuard-installation Menu by ExtremeDOT - Version $EDVERSION ."
+	echo "The git repository is available at: https://github.com/ExtremeDot/wireguard-install"
+	echo "This script is forked from Angristan Script"
 	echo "It looks like WireGuard is already installed."
 	echo ""
-	echo "What do you want to do?"
+	echo "============================================================================="
 	echo "   1) Add a new user"
 	echo "   2) List all users"
 	echo "   3) Revoke existing user"
-	echo "   4) Uninstall WireGuard"
-	echo "   5) Exit"
+	echo ""
+	echo "   98) Uninstall WireGuard"
+	echo "   99) Update Script to Latest"
+	echo "   0) Exit"
 	until [[ ${MENU_OPTION} =~ ^[1-5]$ ]]; do
 		read -rp "Select an option [1-5]: " MENU_OPTION
 	done
@@ -508,10 +543,10 @@ function manageMenu() {
 	3)
 		revokeClient
 		;;
-	4)
+	98)
 		uninstallWg
 		;;
-	5)
+	0)
 		exit 0
 		;;
 	esac
