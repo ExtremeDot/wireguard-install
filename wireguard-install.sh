@@ -680,7 +680,7 @@ function revokeClient() {
 		back2Menu
 	fi
 
-	CLIENT_NUMBER=""
+	CLIENT_NUMBER=-100
 
 	echo ""
 	echo "Select the existing client you want to revoke"
@@ -700,7 +700,7 @@ function revokeClient() {
 		back2Menu
 	fi
 	
-	back2Menu
+	
 	# match the selected number to a client name
 	CLIENT_NAME=$(grep -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf" | cut -d ' ' -f 3 | sed -n "${CLIENT_NUMBER}"p)
 
