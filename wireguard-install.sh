@@ -565,7 +565,7 @@ function manageMenu() {
 		updateSC
 		;;
 	0)
-		exit 0
+		exit
 		;;
 	esac
 }
