@@ -564,6 +564,8 @@ AllowedIPs = ${CLIENT_WG_IPV4}/32,${CLIENT_WG_IPV6}/128" >>"/etc/wireguard/${SER
 }
 
 function listClients() {
+echo
+echo "== All Clients Information =========================================================="
 NUMBER_OF_CLIENTS=$(grep -c -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf")
 if [[ ${NUMBER_OF_CLIENTS} -eq 0 ]]; then
 	echo
@@ -578,9 +580,9 @@ counter=1
 while read -r client; do
     expiration_date=$(grep -E "^${client}=" "$USER_INFO" | cut -d '=' -f 2)
     if [[ "$(date +%Y-%m-%d)" > "$expiration_date" ]]; then
-        echo -e "\e[31m$counter. [ $expiration_date ] - $client\e[0m"
+        echo -e "\e[31m  - $counter. [ $expiration_date ] - $client\e[0m"
     else
-        echo "$counter. [ $expiration_date ] - $client"
+        echo "  - $counter. [ $expiration_date ] - $client"
     fi
 
     ((counter++))
