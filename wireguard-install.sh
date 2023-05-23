@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.901
+EDVERSION=1.90
 INSTART=0
 
 clear
@@ -572,7 +572,7 @@ if [[ ${NUMBER_OF_CLIENTS} -eq 0 ]]; then
 	echo "You have no existing clients!"
 	back2Menu
 fi
-
+CLIENT_NUMBER=""
 WG_CONF="/etc/wireguard/${SERVER_WG_NIC}.conf"
 USER_INFO="/usr/local/extDot/userInfo.conf"
 clients=$(grep -E "^### Client" "$WG_CONF" | cut -d ' ' -f 3)
@@ -599,6 +599,7 @@ function genQRClients() {
 		echo "You have no existing clients!"
 		back2Menu
 	fi
+	CLIENT_NUMBER=""
 
 	echo ""
 	echo "Select the existing client you want to revoke"
@@ -637,10 +638,9 @@ echo "Existing clients:"
 for i in "${!clients[@]}"; do
   echo "$((i+1)). ${clients[i]}"
 done
-
+CLIENT_NUMBER=""
 # Prompt for client selection
 read -p "Select a client number: " client_number
-
 # Validate client selection
 if [[ ! "$client_number" =~ ^[0-9]+$ ]] || [[ "$client_number" -lt 1 ]] || [[ "$client_number" -gt "${#clients[@]}" ]]; then
   echo "Invalid client number."
@@ -673,6 +673,7 @@ function revokeClient() {
 		echo "You have no existing clients!"
 		back2Menu
 	fi
+	CLIENT_NUMBER=""
 
 	echo ""
 	echo "Select the existing client you want to revoke"
@@ -820,10 +821,10 @@ function manageMenu() {
 		genQRClients
 		;;
 	4)
-		revokeClient
+		updateExpClient
 		;;		
 	5)
-		updateExpClient
+		revokeClient
 		;;
 	98)
 		uninstallWg
