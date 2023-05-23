@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.971
+EDVERSION=2.0
 INSTART=0
 
 clear
@@ -811,7 +811,7 @@ function manageMenu() {
 	echo "https://github.com/ExtremeDot/wireguard-install"
 	echo " ------------------------------------------------------------------------------------"
 	echo
-	echo "   1) Add a new user"
+	echo "   1) Add a new user                                       6) Edit UserInfo"
 	echo "   2) Show all users information"
 	echo "   3) Generate QR for Clients"
 	echo "   4) Update the User Expiration Date"
@@ -841,6 +841,10 @@ function manageMenu() {
 		;;		
 	5)
 		revokeClient
+		;;
+	6)
+		nano /usr/local/extDot/userInfo.conf
+		back2Menu
 		;;
 	98)
 		uninstallWg
