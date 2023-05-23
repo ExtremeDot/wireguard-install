@@ -638,6 +638,15 @@ function revokeClient() {
 	# remove generated client file
 	HOME_DIR=$(getHomeDirForClient "${CLIENT_NAME}")
 	rm -f "${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.conf"
+	
+	# remove expiration data 
+	if [ -f "/usr/local/extDot/userInfo.conf" ]; then
+		sed -i "/$CLIENT_NAME/d" "/usr/local/extDot/userInfo.conf"
+		echo "Line containing '$CLIENT_NAME' has been removed from userInfo.conf."
+	else
+		echo "The file /usr/local/extDot/userInfo.conf does not exist."
+	fi
+
 
 	# restart wireguard to apply changes
 	wg syncconf "${SERVER_WG_NIC}" <(wg-quick strip "${SERVER_WG_NIC}")
