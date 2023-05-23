@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.3
+EDVERSION=1.4
 
 clear
 
@@ -544,10 +544,12 @@ function manageMenu() {
 	echo "   98) Uninstall WireGuard       99) Update Script to Latest               0) Exit"
 	echo "====================================================================================="
 	echo
-	until [[ ${MENU_OPTION} =~ ^[0-99]$ ]]; do
-		read -rp "Select an option : " MENU_OPTION
+	MENUITEMR=""
+	until [[ $MENUITEMR =~ ^[0-9]+$ ]] && [ "$MENUITEMR" -ge 0 ] && [ "$MENUITEMR" -le 99 ]; do
+	read -rp "$MENUITEMR [Please Select 0-99]: " -e  MENUITEMR
 	done
-	case "${MENU_OPTION}" in
+	case $MENUITEMR in
+		
 	1)
 		newClient
 		;;
@@ -559,8 +561,7 @@ function manageMenu() {
 		;;
 	98)
 		uninstallWg
-		;;
-		
+		;;		
 	99)
 		updateSC
 		;;
