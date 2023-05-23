@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.0
+EDVERSION=1.1
 
 function isRoot() {
 	if [ "${EUID}" -ne 0 ]; then
@@ -264,9 +264,6 @@ net.ipv6.conf.all.forwarding = 1" >/etc/sysctl.d/wg.conf
 
 	systemctl start "wg-quick@${SERVER_WG_NIC}"
 	systemctl enable "wg-quick@${SERVER_WG_NIC}"
-	
-	# add expiration date check script
-	echo "
 
 	newClient
 	echo -e "${GREEN}If you want to add more clients, you simply need to run this script another time!${NC}"
@@ -285,6 +282,19 @@ net.ipv6.conf.all.forwarding = 1" >/etc/sysctl.d/wg.conf
 		echo -e "${GREEN}You can check the status of WireGuard with: systemctl status wg-quick@${SERVER_WG_NIC}\n\n${NC}"
 		echo -e "${ORANGE}If you don't have internet connectivity from your client, try to reboot the server.${NC}"
 	fi
+}
+
+function updateSC() {
+mkdir -p /tmp/extdotwg
+cd /tmp/extdotwg
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+curl -O https://raw.githubusercontent.com/ExtremeDot/wireguard-install/extreme/wireguard-install.sh
+chmod +x wireguard-install.sh
+mv /tmp/extdotwg/wireguard-install.sh /usr/local/bin/eXdot-WG
+chmod +x /usr/local/bin/eXdot-WG
+bash /usr/local/bin/eXdot-WG ; exit
+
 }
 
 function newClient() {
@@ -545,6 +555,10 @@ function manageMenu() {
 		;;
 	98)
 		uninstallWg
+		;;
+		
+	99)
+		updateSC
 		;;
 	0)
 		exit 0
