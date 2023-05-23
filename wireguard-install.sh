@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.6
+EDVERSION=1.7
 
 clear
 
@@ -68,6 +68,95 @@ function checkOS() {
 		echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora, CentOS, AlmaLinux, Oracle or Arch Linux system"
 		exit 1
 	fi
+}
+
+function create_wg_exp_ctrl_script() {
+
+	mkdir -p /usr/local/extDot/
+	sleep 1
+	touch /usr/local/extDot/wgExpCtrl.sh
+	chmod 755 /usr/local/extDot/wgExpCtrl.sh
+	sleep 1
+	cat <<EOF > /usr/local/extDot/wgExpCtrl.sh
+#!/bin/bash
+
+check_client_expiration() {
+    local client_name=\$1
+    local wg_config_file="\$2"
+    local user_info_file="/usr/local/extDot/userInfo.conf"
+
+    if ! grep -qE "^### Client \$client_name$" "\$wg_config_file"; then
+        echo "Client \$client_name is not defined in \$wg_config_file"
+        return 1
+    fi
+
+    local client_section=\$(grep -E "^### Client \$client_name$" "\$wg_config_file")
+    local allowed_ips_line=\$(grep -A 5 -E "^\$client_section\$" "\$wg_config_file" | awk '/AllowedIPs/')
+
+    local current_date=\$(date +%Y-%m-%d)
+    local expiration_date=\$(grep "\$client_name" "\$user_info_file" | awk -F'=' '{print \$2}')
+
+    if [[ "\$current_date" > "\$expiration_date" ]]; then
+        if ! grep -qE "^# \$allowed_ips_line" "\$wg_config_file"; then
+            sed -i "/^\$client_section\$/,/AllowedIPs/s/^AllowedIPs/# AllowedIPs/" "\$wg_config_file"
+        fi
+    else
+        sed -i "/^\$client_section\$/,/AllowedIPs/s/^# AllowedIPs/AllowedIPs/" "\$wg_config_file"
+    fi
+}
+
+# Find all WireGuard configuration files in /etc/wireguard folder
+config_files=\$(find /etc/wireguard -type f -name "*.conf")
+
+while IFS='=' read -r client_name expiration_date || [[ -n "\$client_name" ]]; do
+    for config_file in \$config_files; do
+        check_client_expiration "\$client_name" "\$config_file"
+    done
+done < "/usr/local/extDot/userInfo.conf"
+
+
+generate_hash() {
+    file="\$1"
+    hash_code=\$(sha256sum "\$file" | awk '{ print \$1 }')
+}
+
+store_hash() {
+    interface="\$1"
+    hash_code="\$2"
+    echo "\$interface:\$hash_code" >> /usr/local/extDot/confHash.log
+}
+
+check_and_sync() {
+    interface="\$1"
+    config_file="\$2"
+    previous_hash="\$3"
+
+    current_hash=\$(generate_hash "\$config_file")
+
+    if [[ "\$current_hash" != "\$previous_hash" ]]; then
+        wg syncconf "\$interface" <(wg-quick strip "\$interface")
+        store_hash "\$interface" "\$current_hash"
+
+    fi
+}
+
+config_files=\$(find /etc/wireguard -type f -name "*.conf")
+
+for config_file in \$config_files; do
+    interface_name=\$(basename "\$config_file" .conf)
+    previous_hash=\$(grep -e "^\$interface_name:" /usr/local/extDot/confHash.log | awk -F':' '{ print \$2 }')
+    
+    if [[ -z "\$previous_hash" ]]; then
+        hash_code=\$(generate_hash "\$config_file")
+        store_hash "\$interface_name" "\$hash_code"
+    else
+        check_and_sync "\$interface_name" "\$config_file" "\$previous_hash"
+    fi
+done
+
+EOF
+
+    chmod +x /usr/local/extDot/wgExpCtrl.sh
 }
 
 function getHomeDirForClient() {
@@ -177,6 +266,7 @@ function installWireGuard() {
 	if [[ ${OS} == 'ubuntu' ]] || [[ ${OS} == 'debian' && ${VERSION_ID} -gt 10 ]]; then
 		apt-get update
 		apt-get install -y wireguard iptables resolvconf qrencode
+		create_wg_exp_ctrl_script
 	elif [[ ${OS} == 'debian' ]]; then
 		if ! grep -rqs "^deb .* buster-backports" /etc/apt/; then
 			echo "deb http://deb.debian.org/debian buster-backports main" >/etc/apt/sources.list.d/backports.list
@@ -185,6 +275,7 @@ function installWireGuard() {
 		apt update
 		apt-get install -y iptables resolvconf qrencode
 		apt-get install -y -t buster-backports wireguard
+		create_wg_exp_ctrl_script
 	elif [[ ${OS} == 'fedora' ]]; then
 		if [[ ${VERSION_ID} -lt 32 ]]; then
 			dnf install -y dnf-plugins-core
@@ -425,7 +516,7 @@ AllowedIPs = ${ALLOWED_IPS}" >"${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME
 PublicKey = ${CLIENT_PUB_KEY}
 PresharedKey = ${CLIENT_PRE_SHARED_KEY}
 AllowedIPs = ${CLIENT_WG_IPV4}/32,${CLIENT_WG_IPV6}/128" 
-PostUp = /usr/local/bin/check_wireguard_expiration.sh
+PostUp = /usr/local/extDot/wgExpCtrl.sh
 >>"/etc/wireguard/${SERVER_WG_NIC}.conf"
 
 	wg syncconf "${SERVER_WG_NIC}" <(wg-quick strip "${SERVER_WG_NIC}")
@@ -450,6 +541,41 @@ function listClients() {
 
 	grep -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf" | cut -d ' ' -f 3 | nl -s ') '
 }
+
+
+function genQRClients() {
+	NUMBER_OF_CLIENTS=$(grep -c -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf")
+	if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
+		echo ""
+		echo "You have no existing clients!"
+		exit 1
+	fi
+
+	echo ""
+	echo "Select the existing client you want to revoke"
+	grep -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf" | cut -d ' ' -f 3 | nl -s ') '
+	until [[ ${CLIENT_NUMBER} -ge 1 && ${CLIENT_NUMBER} -le ${NUMBER_OF_CLIENTS} ]]; do
+		if [[ ${CLIENT_NUMBER} == '1' ]]; then
+			read -rp "Select one client [1]: " CLIENT_NUMBER
+		else
+			read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
+		fi
+	done
+
+	# match the selected number to a client name
+	CLIENT_NAMER=$(grep -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf" | cut -d ' ' -f 3 | sed -n "${CLIENT_NUMBER}"p)
+	
+	# Generate QR code if qrencode is installed
+	if command -v qrencode &>/dev/null; then
+		echo -e "${GREEN}\nHere is your client config file as a QR Code:\n${NC}"
+		qrencode -t ansiutf8 -l L <"${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAMER}.conf"
+		echo ""
+	fi
+
+	echo -e "${GREEN}Your client config file is in ${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.conf${NC}"
+	
+	}
+	
 
 function revokeClient() {
 	NUMBER_OF_CLIENTS=$(grep -c -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf")
@@ -560,7 +686,8 @@ function manageMenu() {
 	echo
 	echo "   1) Add a new user"
 	echo "   2) List all users"
-	echo "   3) Revoke existing user"
+	echo "   3) Generate QR for Clients"
+	echo "   4) Revoke existing user"
 	echo
 	echo " ------------------------------------------------------------------------------------"
 	echo "   98) Uninstall WireGuard       99) Update Script to Latest               0) Exit"
@@ -579,6 +706,10 @@ function manageMenu() {
 		listClients
 		;;
 	3)
+		genQRClients
+		;;
+		
+	4)
 		revokeClient
 		;;
 	98)
