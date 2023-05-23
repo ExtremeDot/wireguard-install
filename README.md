@@ -1,3 +1,20 @@
+## Usage
+
+Download and execute the script. Answer the questions asked by the script and it will take care of the rest.
+
+```bash
+curl -O https://raw.githubusercontent.com/ExtremeDot/wireguard-install/extreme/wireguard-install.sh
+
+chmod +x wireguard-install.sh
+
+cp wireguard-install.sh /usr/local/bin/eXdot-WG && chmod +x /usr/local/bin/eXdot-WG
+
+eXdot-WG
+
+```
+
+***
+
 # WireGuard installer
 
 ![Lint](https://github.com/angristan/wireguard-install/workflows/Lint/badge.svg)
@@ -25,12 +42,4 @@ Supported distributions:
 - Rocky Linux >= 8
 - Ubuntu >= 18.04
 
-## Usage
 
-Download and execute the script. Answer the questions asked by the script and it will take care of the rest.
-
-```bash
-curl -O https://raw.githubusercontent.com/angristan/wireguard-install/master/wireguard-install.sh
-chmod +x wireguard-install.sh
-./wireguard-install.sh
-```
