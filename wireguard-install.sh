@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.92
+EDVERSION=1.93
 INSTART=0
 
 clear
@@ -435,6 +435,7 @@ bash /usr/local/bin/eXdot-WG ; exit
 }
 
 function newClient() {
+
 	# If SERVER_PUB_IP is IPv6, add brackets if missing
 	if [[ ${SERVER_PUB_IP} =~ .*:.* ]]; then
 		if [[ ${SERVER_PUB_IP} != *"["* ]] || [[ ${SERVER_PUB_IP} != *"]"* ]]; then
@@ -496,7 +497,12 @@ function newClient() {
 	fi
 	
 	echo "${CLIENT_NAME}=$expiration_date" >> /usr/local/extDot/userInfo.conf
-
+	
+	# Clean VARS
+	BASEIP=""
+	IPV4_EXISTS=""
+	IPV6_EXISTS=""
+	
 	BASE_IP=$(echo "$SERVER_WG_IPV4" | awk -F '.' '{ print $1"."$2"."$3 }')
 	until [[ ${IPV4_EXISTS} == '0' ]]; do
 		read -rp "Client WireGuard IPv4: ${BASE_IP}." -e -i "${DOT_IP}" DOT_IP
@@ -560,6 +566,7 @@ AllowedIPs = ${CLIENT_WG_IPV4}/32,${CLIENT_WG_IPV6}/128" >>"/etc/wireguard/${SER
 	fi
 
 	echo -e "${GREEN}Your client config file is in ${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.conf${NC}"
+	
 	back2Menu
 }
 
