@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.76
+EDVERSION=1.77
 INSTART=0
 
 clear
@@ -22,8 +22,11 @@ function isRoot() {
 
 function back2Menu() {
 echo 
+if [ "$INSTART" -eq 0 ]; then
 read -n 1 -s -r -p "Press any key to continue..."
 manageMenu
+fi
+
 }
 
 function checkVirt() {
@@ -553,6 +556,8 @@ AllowedIPs = ${CLIENT_WG_IPV4}/32,${CLIENT_WG_IPV6}/128" >>"/etc/wireguard/${SER
 	fi
 
 	echo -e "${GREEN}Your client config file is in ${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.conf${NC}"
+	
+	back2Menu
 }
 
 function listClients() {
@@ -563,12 +568,8 @@ function listClients() {
 	fi
 
 	grep -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf" | cut -d ' ' -f 3 | nl -s ') '
-	check_instart() {
-		if [ "$INSTART" -eq 1 ]; then
-        		echo "Exiting..."
-    		else
-			back2Menu
-    		fi
+	
+	back2Menu
 }
 	
 	
@@ -580,7 +581,7 @@ function genQRClients() {
 	if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
 		echo ""
 		echo "You have no existing clients!"
-		exit 1
+		back2Menu
 	fi
 
 	echo ""
