@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This is a forked version of Angristan WireGuard Script.
+# GithUB URL: https://github.com/angristan/wireguard-install
 # Secure WireGuard server installer
 # https://github.com/angristan/wireguard-install
 
