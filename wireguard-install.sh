@@ -545,7 +545,7 @@ function manageMenu() {
 	echo "   98) Uninstall WireGuard       99) Update Script to Latest               0) Exit"
 	echo "====================================================================================="
 	echo
-	until [[ ${MENU_OPTION} =~ ^[1-5]$ ]]; do
+	until [[ ${MENU_OPTION} =~ ^[0-99]$ ]]; do
 		read -rp "Select an option : " MENU_OPTION
 	done
 	case "${MENU_OPTION}" in
