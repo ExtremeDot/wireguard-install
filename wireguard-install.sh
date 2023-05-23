@@ -572,7 +572,7 @@ if [[ ${NUMBER_OF_CLIENTS} -eq 0 ]]; then
 	echo "You have no existing clients!"
 	back2Menu
 fi
-CLIENT_NUMBER=""
+
 WG_CONF="/etc/wireguard/${SERVER_WG_NIC}.conf"
 USER_INFO="/usr/local/extDot/userInfo.conf"
 clients=$(grep -E "^### Client" "$WG_CONF" | cut -d ' ' -f 3)
@@ -629,16 +629,15 @@ function genQRClients() {
 	}
 	
 function updateExpClient() {
-# Read clients from userInfo.conf file
 clients_file="/usr/local/extDot/userInfo.conf"
 clients=($(grep -oP '^[^=]+' "$clients_file"))
-
-# Display menu of existing clients
 echo "Existing clients:"
 for i in "${!clients[@]}"; do
   echo "$((i+1)). ${clients[i]}"
 done
-CLIENT_NUMBER=""
+
+client_number=""
+
 # Prompt for client selection
 read -p "Select a client number: " client_number
 # Validate client selection
@@ -654,7 +653,6 @@ current_date=$(date +'%Y-%m-%d')
 echo "Enter expiration date in (YYYY-MM-DD) format: "
 read -rp "Expiration date: " -e -i "$current_date" new_expiration_date
 new_expiration_date=${new_expiration_date:-$current_date}
-
 until date -d "$new_expiration_date" >/dev/null 2>&1; do
 	echo -e "${RED} Error: Invalid date format. Please use the format YYYY-MM-DD ${NC}"
 	read -rp "Expiration date: " -e -i "$current_date" new_expiration_date
@@ -663,7 +661,6 @@ done
 # Update expiration date in the userInfo.conf file
 sed -i "s/^$selected_client=.*/$selected_client=$new_expiration_date/" "$clients_file"
 echo "Expiration date updated for $selected_client."
-
 back2Menu
 
 }
@@ -682,7 +679,7 @@ function revokeClient() {
 	echo "Enter 0 to back to Main Menu"
 	grep -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf" | cut -d ' ' -f 3 | nl -s ') '
 	
-	until [[ -n $CLIENT_NUMBER && ${CLIENT_NUMBER} -ge 0 && ${CLIENT_NUMBER} -le ${NUMBER_OF_CLIENTS} ]]; do
+	until [[ ${CLIENT_NUMBER} -ge 0 && ${CLIENT_NUMBER} -le ${NUMBER_OF_CLIENTS} ]]; do
 		if [[ ${CLIENT_NUMBER} == '1' ]]; then
 			read -rp "Select one client [1]: " CLIENT_NUMBER
 		else
