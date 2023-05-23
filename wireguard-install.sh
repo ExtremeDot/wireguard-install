@@ -7,7 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.74
+EDVERSION=1.75
 
 clear
 
@@ -16,6 +16,13 @@ function isRoot() {
 		echo "You need to run this script as root"
 		exit 1
 	fi
+}
+
+
+function back2Menu() {
+echo 
+read -n 1 -s -r -p "Press any key to continue..."
+manageMenu
 }
 
 function checkVirt() {
@@ -552,7 +559,7 @@ function listClients() {
 	fi
 
 	grep -E "^### Client" "/etc/wireguard/${SERVER_WG_NIC}.conf" | cut -d ' ' -f 3 | nl -s ') '
-	manageMenu	
+	back2Menu	
 	
 }
 
@@ -587,7 +594,7 @@ function genQRClients() {
 	fi
 
 	echo -e "${GREEN}Your client config file is in ${HOME_DIR}/${SERVER_WG_NIC}-client-${CLIENT_NAME}.conf${NC}"
-	manageMenu
+	back2Menu
 	
 	}
 	
@@ -623,7 +630,7 @@ function revokeClient() {
 
 	# restart wireguard to apply changes
 	wg syncconf "${SERVER_WG_NIC}" <(wg-quick strip "${SERVER_WG_NIC}")
-	manageMenu
+	back2Menu
 }
 
 function oldDataBackup() {
