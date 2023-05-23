@@ -7,7 +7,9 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-EDVERSION=1.1
+EDVERSION=1.2
+
+clear
 
 function isRoot() {
 	if [ "${EUID}" -ne 0 ]; then
@@ -527,19 +529,22 @@ function uninstallWg() {
 }
 
 function manageMenu() {
+	echo "====================================================================================="
 	echo "Welcome to WireGuard-installation Menu by ExtremeDOT - Version $EDVERSION ."
+	echo
 	echo "The git repository is available at: https://github.com/ExtremeDot/wireguard-install"
 	echo "This script is forked from Angristan Script"
 	echo "It looks like WireGuard is already installed."
-	echo ""
-	echo "============================================================================="
+	echo " ------------------------------------------------------------------------------------"
+	echo
 	echo "   1) Add a new user"
 	echo "   2) List all users"
 	echo "   3) Revoke existing user"
-	echo ""
-	echo "   98) Uninstall WireGuard"
-	echo "   99) Update Script to Latest"
-	echo "   0) Exit"
+	echo
+	echo " ------------------------------------------------------------------------------------"
+	echo "   98) Uninstall WireGuard       99) Update Script to Latest               0) Exit"
+	echo "====================================================================================="
+	echo
 	until [[ ${MENU_OPTION} =~ ^[1-5]$ ]]; do
 		read -rp "Select an option [1-5]: " MENU_OPTION
 	done
